@@ -4,12 +4,7 @@ import pickle
 import numpy as np
 from utils import max_min
 
-GAMMA=0.9
-gsize = 4
-p1_startpos = (0,0)
-p2_startpos = (3,3)
-obstacle_mask = np.zeros((gsize,gsize))
-evader_targets = [(3,1)]
+from input_data import *
 game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets)
 
 print(len(game.non_term_S), len(game.term_S))
@@ -57,12 +52,12 @@ for s in game.non_term_S:
     rps=nash.Game(Q[s], -Q[s])
     eqs = rps.support_enumeration()
     policy[s]= list(eqs)
-    print("policy=" ,s, policy[s], len(policy[s]))
-    if s == (1,0,1,3):
-        break
+    # print("policy=" ,s, policy[s], len(policy[s]))
+    # if s == (1,0,1,3):
+    #     break
 
 
-# policy_file = open("policy.pkl", "wb")
-# pickle.dump(policy, policy_file)
-# policy_file.close()
+policy_file = open("policy.pkl", "wb")
+pickle.dump(policy, policy_file)
+policy_file.close()
 

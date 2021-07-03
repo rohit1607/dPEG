@@ -39,7 +39,7 @@ class deterministic_game:
                     for j2 in range(gsize):
                         # self.S.append((i1,j1,i2,j2))
                         # TODO: add obstacle barged-in cases to termS 
-                        if (i1,j1)==(i2,j2):
+                        if (i1,j1)==(i2,j2) or (i2,j2) in self.ev_targs:
                             self.term_S.append((i1,j1,i2,j2))
                         else:
                             self.non_term_S.append((i1,j1,i2,j2))
