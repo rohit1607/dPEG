@@ -1,7 +1,8 @@
 import numpy as np
+from utils import manhattan
 
 class deterministic_game:
-    def __init__(self, gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets):
+    def __init__(self, gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method):
         """
         gsize: int
         p1_startpos: (int, int)
@@ -27,6 +28,8 @@ class deterministic_game:
         self.xs = [i for i in range(gsize)]
         self.ys = [j for j in range(gsize)]
         self.dxy = 0.5*abs(self.xs[1]-self.xs[0])
+        self.r_term = 4*gsize
+        self.method = method
 
     def states(self):
         gsize = self.gsize
@@ -52,8 +55,6 @@ class deterministic_game:
         self.A2 = [i for i in range(self.n_A2)]
         self.A = [self.A1, self.A2]
 
-    def rewards(self):
-        return
 
     def dynamics(self, pos, a, REVERSE=False):
         """
@@ -92,6 +93,26 @@ class deterministic_game:
             
         return i,j
 
+    def general_one_step_rewards(self, s_old):
+        r = 0
+
+        if self.method == 'r_term_only':
+            pass
+
+        if self.method == 'del_t':
+            r = -1
+
+        # TODO: manhattan distance to take into account obstacles
+        if self.method == 'del_manh':
+            r = -(manhattan((self.i[1],self.j[1]),(self.i[2],self.j[2])) 
+                    - manhattan((s_old[0], s_old[1]),(s_old[2], s_old[3]))  )
+
+        
+        if self.method == 'final_manh':
+            r = -manhattan((self.i[1],self.j[1]),(self.i[2],self.j[2]))
+        
+
+        return r
 
     def move(self, a1, a2):
         """
@@ -126,17 +147,20 @@ class deterministic_game:
                 self.i[p], self.j[p] = self.dynamics((self.i[p], self.j[p]), a[p], REVERSE=True)
                 # print("outbound")
                 if p==1:
-                    r = -1
+                    r = -self.r_term
                 if p==2:
-                    r= +1
-
+                    r= +self.r_term
+        
         if self.P_catches_E(s_old):
-            r = +1
+            r = +self.r_term
             # print("P_catches_E")
 
         if self.E_reaches_target():
-            r = -1
+            r = -self.r_term
             # print("E_reaches_target")
+
+        # add general one step reward based on method 
+        r += self.general_one_step_rewards(s_old)
 
         self.set_state((self.i[1], self.j[1], self.i[2], self.j[2]))
 

@@ -3,12 +3,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 from scipy import stats
+from os.path import join
 
 
+def manual_moves(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method):
 
-def manual_moves(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets):
-
-    game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets)
+    game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method)
     print(game.get_state(), game.s)
     print(game.move(2,1))
     print("-------")
@@ -40,7 +40,7 @@ def setup_grid_in_plot(fig, ax, g):
 
     p1_xy0 = g.ij_to_xy(g.p1_startpos)
     p2_xy0 = g.ij_to_xy(g.p2_startpos)
-    print("p1_xy0, p2_xy0= ", p1_xy0, p2_xy0)
+    # print("setting up grid with p1_xy0, p2_xy0= ", p1_xy0, p2_xy0)
     plt.scatter(p1_xy0[0], p1_xy0[1], marker = 'o', s = msize, color = 'k', zorder = 1e5)
     plt.scatter(p2_xy0[0], p2_xy0[1], marker = '^', s = msize, color = 'k', zorder = 1e5)
     for targ in g.ev_targs:
@@ -72,7 +72,7 @@ def save_trajectories(g, policy):
     count = 0
     while True:
         count+=1
-        print("s=",s)
+        print("s=",s, len(policy[s]))
         id = np.random.randint(0,len(policy[s]),1)[0]
         print("id=", id)
         d_a = policy[s][id]
@@ -88,16 +88,14 @@ def save_trajectories(g, policy):
 
 def plot_trajectories(g, traj, policy, fname=None):
 
-    fig = plt.figure(figsize=(10, 10))
-    ax = fig.add_subplot(1, 1, 1)
-    setup_grid_in_plot(fig, ax, g)
+
 
     p1_xtr = []
     p1_ytr = []
     p2_xtr = []
     p2_ytr = []
-
-    for s in traj:
+    for t in range(len(traj)):
+        s =  traj[t]
         x1, y1 = g.ij_to_xy((s[0],s[1]))
         x2, y2 = g.ij_to_xy((s[2],s[3]))
 
@@ -106,14 +104,31 @@ def plot_trajectories(g, traj, policy, fname=None):
         p2_xtr.append(x2)
         p2_ytr.append(y2)
 
-    plt.plot(p1_xtr, p1_ytr, color='r',label='pursuer')
-    plt.scatter(p1_xtr, p1_ytr, color='r')
-    plt.plot(p2_xtr, p2_ytr, color='g', label='evader')
-    plt.scatter(p2_xtr, p2_ytr, marker='^', color='g')
-    plt.legend()
-    if fname != None:
-        plt.savefig(fname, bbox_inches = "tight")
-    plt.show()
+    for t in range(len(traj)):
+        fig = plt.figure(figsize=(10, 10))
+        ax = fig.add_subplot(1, 1, 1)
+        setup_grid_in_plot(fig, ax, g)
+        # annotations = [i for i in range(t) ]
+        try:
+            print("t=", t)
+            plt.plot(p1_xtr[0:t+1], p1_ytr[0:t+1], color='r',label='pursuer')
+            plt.scatter(p1_xtr[0:t+1], p1_ytr[0:t+1], color='r')
+            plt.plot(p2_xtr[0:t+1], p2_ytr[0:t+1], color='g', label='evader')
+            plt.scatter(p2_xtr[0:t+1], p2_ytr[0:t+1], marker='^', color='g')
+
+            plt.annotate(str(t), (p1_xtr[t], p1_ytr[t]),color='r')
+            plt.annotate(str(t), (p2_xtr[t], p2_ytr[t]), color='g')
+            plt.legend()
+        except:
+            assert(0>1)
+
+        
+        fname = 'traj' + str(t)
+        # filename = join(plot_seq_path, fname) + "@t" + str(t) + ".png"
+        plt.savefig(fname, bbox_inches = "tight", dpi = 300)
+        plt.clf()
+        plt.close()
+
     return
 
 from input_data import *
@@ -130,7 +145,7 @@ from input_data import *
 p1_startpos = (0,0)
 p2_startpos = (1,3)
 
-game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets)
+game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method)
 
 # manual_moves(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets)
 

@@ -5,7 +5,7 @@ import numpy as np
 from utils import max_min
 
 from input_data import *
-game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets)
+game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method)
 
 print(len(game.non_term_S), len(game.term_S))
 R={}
