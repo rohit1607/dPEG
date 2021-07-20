@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 from scipy import stats
 from os.path import join
+from utils import manhattan, read_path_file
 
 
 def manual_moves(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method):
@@ -46,6 +47,11 @@ def setup_grid_in_plot(fig, ax, g):
     for targ in g.ev_targs:
         xtarg, ytarg = g.ij_to_xy(targ)
         plt.scatter(xtarg, ytarg, marker = 'x', s = 3*msize, color = 'k', zorder = 1e5)
+    for i in range(g.gsize):
+        for j in range(g.gsize):
+            if g.obs_mask[i,j] == 1:
+                obs_xy = g.ij_to_xy((i,j))
+                plt.scatter(obs_xy[0], obs_xy[1], marker = 's',s = 10*msize,color ='c')
     # x_ssg, y_ssg =  get_sg_square_corners(g, 'start')
     # plt.fill(x_ssg, y_ssg, 'g', alpha = 0.5, zorder = 0)
     # if (0<= g.endpos[0] < gsize) and (0<= g.endpos[1] < gsize):
@@ -63,7 +69,7 @@ def sample_action(d_a1):
     return int(distr.rvs(size=1)[0])
 
 
-def save_trajectories(g, policy):
+def generate_trajectories(g, policy):
 
     traj = []
     s = g.get_state()
@@ -123,13 +129,19 @@ def plot_trajectories(g, traj, policy, fname=None):
             assert(0>1)
 
         
-        fname = 'traj' + str(t)
+        imgname = fname +"@t" +str(t)
         # filename = join(plot_seq_path, fname) + "@t" + str(t) + ".png"
-        plt.savefig(fname, bbox_inches = "tight", dpi = 300)
+        plt.savefig(imgname, bbox_inches = "tight", dpi = 300)
         plt.clf()
         plt.close()
 
     return
+
+def check_policy(policy):
+    print("states with 0 length policies")
+    for s in policy.keys():
+        if len(policy[s]) == 0:
+            print(s, manhattan((s[0],s[1]),(s[2],s[3])))
 
 from input_data import *
 
@@ -142,21 +154,31 @@ from input_data import *
 # p1_startpos = (2,2)
 # p2_startpos = (0,0)
 
-p1_startpos = (0,0)
-p2_startpos = (1,3)
+# p1_startpos = (0,0)
+# p2_startpos = (1,3)
 
-game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method)
+# p1_startpos = (0,0)
+# p2_startpos = (0,5) #(0,5), (0,7), (5,6), (7,0)
+
+# p1_startpos = (1,0)
+# p2_startpos = (0,2) 
+solver_output_path = read_path_file()
+game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method, solver_output_path)
 
 # manual_moves(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets)
 
 
-policy_file = open("policy.pkl", "rb")
+print("path=", solver_output_path)
+
+policy_file = open(solver_output_path+"/policy.pkl", "rb")
 policy = pickle.load(policy_file)
 policy_file.close()
+check_policy(policy)
 
-
-fname="test_traj_" + str(2)
-traj = save_trajectories(game, policy)
+fname=solver_output_path+"/traj"
+print("fname=",fname)
+traj = generate_trajectories(game, policy)
 print("traj= ", traj)
 plot_trajectories(game, traj, policy, fname)
 # plt.show()
+
