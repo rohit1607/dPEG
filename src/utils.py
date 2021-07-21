@@ -2,6 +2,7 @@
 import pickle
 import os
 from pathlib import Path
+import nashpy as nash
 
 
 def max_a1_min_a2(mat):
@@ -11,6 +12,25 @@ def max_a1_min_a2(mat):
 def max_a2_min_a1(mat):
     m,n = mat.shape
     return max([min(mat[:,j]) for j in range(n)])
+
+def msne_utility(mat):
+    m,n = mat.shape
+    game = nash.Game(mat, -mat)
+    equilibria = game.support_enumeration()
+    # print("INF eqs=",list(equilibria))
+    utility_list = []
+    eq_list = []
+    for eq in equilibria:
+        # print("eq=",eq)
+        sigma1, sigma2 = eq
+        # print("sigma1=", sigma1)
+        # print("sigma2=", sigma2)
+        utility = game[sigma1, sigma2]
+        # print("utility=", utility)
+        utility_list.append(utility[0])
+        eq_list.append(eq)
+
+    return eq_list, utility_list
 
 # import numpy as np
 # A = np.arange(16).reshape((4,4))

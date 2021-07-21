@@ -40,6 +40,7 @@ class deterministic_game:
             print("obstacle present")
             self.solve_MDPs_for_optimal_measures()
 
+
     def set_solver_output_path(self, path):
         self.solver_output_path = path
 

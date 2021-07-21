@@ -2,7 +2,7 @@ import pickle
 import nashpy as nash
 import numpy as np
 import pickle
-from utils import read_path_file
+from utils import read_path_file, msne_utility
 
 # A = np.array( [[ -0.95,        -1.  ,        33. ,         -1.   ,       31.05      ],
 #             [ -1.  ,        -0.95  ,      -0.95   ,     -1.05   ,     31.        ],
@@ -39,5 +39,11 @@ def compare_Q1_Q2(Q1,Q2):
             print(s, Q1[s]+Q2[s])
     print(count)
 
-
-compare_Q1_Q2(Q1, Q2)
+# print(Q1.keys())
+equilibria, utilities = msne_utility(Q1[(1,0,3,1)])
+# equilibria = list(equilibria)
+print("eqs=",equilibria)
+print("utils=", utilities)
+print(len(utilities), len(equilibria))
+# for i in range(len(utilities)):
+#     print(equilibria[i], utilities[i])

@@ -2,7 +2,7 @@ import nashpy as nash
 from game import deterministic_game
 import pickle
 import numpy as np
-from utils import max_a1_min_a2, max_a2_min_a1, save_dict, get_solver_output_path
+from utils import max_a1_min_a2, max_a2_min_a1, save_dict, get_solver_output_path, msne_utility
 
 from input_data import *
 
@@ -19,12 +19,20 @@ def Game_VI(game):
         Q[s] = np.zeros((game.n_A1, game.n_A2))
         Q2[s] = np.zeros((game.n_A1, game.n_A2))
 
-
-
+    msne_util = {}
     count = 0
     while True:
         count+=1
         del_Qsa_max = 0
+            # TODO: precompute msne utilites for Qnews
+        for s in game.non_term_S:
+            eq_list, utility_list = msne_utility(Q[s])
+            try:
+                msne_util[s] = utility_list[0]
+            except:
+                print("degen mat at s=",s)
+                print("len(utility_list=", len(utility_list))
+
         for s in game.non_term_S:
             for a1 in game.A[0]:
                 for a2 in game.A[1]:  
@@ -32,7 +40,7 @@ def Game_VI(game):
                         game.set_state(s)
                         old_Qsa = Q[s][a1,a2]
                         r, new_s = game.move(a1,a2)
-                        Q[s][a1,a2] =  r + GAMMA*max_a1_min_a2(Q[new_s])
+                        Q[s][a1,a2] =  r + GAMMA*msne_util[new_s]
                         del_Q = abs(Q[s][a1,a2] - old_Qsa)
                         del_Qsa_max = max(del_Qsa_max, del_Q)
                     except:
