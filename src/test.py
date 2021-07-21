@@ -15,13 +15,13 @@ from utils import read_path_file, msne_utility
 # print(list(eqs))
 
 path = read_path_file()
-Q_file = open(path+"/Q.pkl", "rb")
-Q1 = pickle.load(Q_file)
-Q_file.close()
+# Q_file = open(path+"/Q.pkl", "rb")
+# Q1 = pickle.load(Q_file)
+# Q_file.close()
 
-Q2_file = open(path+"/Q2.pkl", "rb")
-Q2 = pickle.load(Q2_file)
-Q2_file.close()
+# Q2_file = open(path+"/Q2.pkl", "rb")
+# Q2 = pickle.load(Q2_file)
+# Q2_file.close()
 
 def compare_Q1_Q2(Q1,Q2):
     count=0
@@ -40,10 +40,13 @@ def compare_Q1_Q2(Q1,Q2):
     print(count)
 
 # print(Q1.keys())
-equilibria, utilities = msne_utility(Q1[(1,0,3,1)])
+# equilibria, utilities = msne_utility(Q1[(1,0,3,1)])
 # equilibria = list(equilibria)
-print("eqs=",equilibria)
-print("utils=", utilities)
-print(len(utilities), len(equilibria))
+# print("eqs=",equilibria)
+# print("utils=", utilities)
+# print(len(utilities), len(equilibria))
 # for i in range(len(utilities)):
 #     print(equilibria[i], utilities[i])
+
+for i in range(5,0,-1):
+    print(i)

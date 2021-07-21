@@ -4,56 +4,41 @@ import pickle
 import numpy as np
 from utils import max_a1_min_a2, max_a2_min_a1, save_dict, get_solver_output_path, msne_utility
 
-from input_data import *
 
 
-def Game_VI(game):
+def Game_VI_onestep(game, Q_term):
 
-    print(len(game.non_term_S), len(game.term_S))
-    R={}
     Q={}
     Q2={}
+    policy = {}
 
-    print("building q[s] payoff matrices")
     for s in game.non_term_S + game.term_S:
         Q[s] = np.zeros((game.n_A1, game.n_A2))
         Q2[s] = np.zeros((game.n_A1, game.n_A2))
 
     msne_util = {}
-    count = 0
-    while True:
-        count+=1
-        del_Qsa_max = 0
-            # TODO: precompute msne utilites for Qnews
-        for s in game.non_term_S:
-            eq_list, utility_list = msne_utility(Q[s])
-            try:
-                msne_util[s] = utility_list[0]
-            except:
-                print("degen mat at s=",s)
-                print("len(utility_list=", len(utility_list))
+    # precompute msne utilites for Qnews
+    for s in game.non_term_S:
+        eq_list, utility_list = msne_utility(Q_term[s])
+        try:
+            msne_util[s] = utility_list[0]
+            policy[s] = eq_list
+        except:
+            print("degen mat at s=",s)
+            print("len(utility_list=", len(utility_list))
 
-        for s in game.non_term_S:
-            for a1 in game.A[0]:
-                for a2 in game.A[1]:  
-                    try:
-                        game.set_state(s)
-                        old_Qsa = Q[s][a1,a2]
-                        r, new_s = game.move(a1,a2)
-                        Q[s][a1,a2] =  r + GAMMA*msne_util[new_s]
-                        del_Q = abs(Q[s][a1,a2] - old_Qsa)
-                        del_Qsa_max = max(del_Qsa_max, del_Q)
-                    except:
-                        print("s,a1,a2, new_s= ", s,a1,a2, new_s)
-        print("count, del_Qsa_max= ", count, del_Qsa_max)
+    for s in game.non_term_S:
+        for a1 in game.A[0]:
+            for a2 in game.A[1]:  
+                try:
+                    game.set_state(s)
+                    old_Qsa = Q[s][a1,a2]
+                    r, new_s = game.move(a1,a2)
+                    Q[s][a1,a2] =  r + GAMMA*msne_util[new_s]
+                except:
+                    print("s,a1,a2, new_s= ", s,a1,a2, new_s)
 
-        if del_Qsa_max < TOL:
-            break
 
-    # count = 0
-    # while True:
-    #     count+=1
-    #     del_Qsa_max = 0
     #     for s in game.non_term_S:
     #         for a1 in game.A[0]:
     #             for a2 in game.A[1]:  
@@ -66,64 +51,44 @@ def Game_VI(game):
     #                     del_Qsa_max = max(del_Qsa_max, del_Q)
     #                 except:
     #                     print("s,a1,a2, new_s= ", s,a1,a2, new_s)
-    #     print("count, del_Qsa_max= ", count, del_Qsa_max)
 
-    #     if del_Qsa_max < TOL:
-    #         break
 
-    return Q, Q2
+    return Q, Q2, policy
 
-def compute_Game_Policy(game,Q,checklist):
-    policy={}
-    eQ = {}     
+def get_R_dict(game):
+    R = {}
+    for s in game.non_term_S + game.term_S:
+        R[s] = np.zeros((game.n_A1, game.n_A2))
     for s in game.non_term_S:
-        eQ[s] = -Q[s]
-        rps=nash.Game(Q[s], eQ[s])
-        eqs = rps.support_enumeration()
-        policy[s]= list(eqs)
-        if s in checklist:
-            print("policy=" ,s, policy[s], len(policy[s]))
-            print("Q[s]=", Q[s])
-            print()
-        # if s == (1,0,1,3):
-        #     break
-    return policy
+        for a1 in game.A[0]:
+            for a2 in game.A[1]:  
+                try:
+                    game.set_state(s)
+                    r, new_s = game.move(a1,a2)
+                    R[s][a1,a2] = r
+                except:
+                    print("s,a1,a2, new_s= ", s,a1,a2, new_s)
+    return R
 
 
-
-
-
-def solve_Game(game):
-
-    Q,Q2 = Game_VI(game)
+def solve_Game(game, nt):
+    print("solving game with nt=", nt)
+    Q_term = get_R_dict(game)
+    full_policy = {}
+    for t in range(nt):
+        print("solving nt-",t+1)
+        Q,_,policy = Game_VI_onestep(game,Q_term)
+        Q_term = Q
+        full_policy[t] = policy
+    save_dict(full_policy, game.solver_output_path+"/full_policy.pkl")  
+        
     paths_file = open("paths.txt","w")
     paths_file.write(game.solver_output_path)
     paths_file.close()
 
     save_dict(Q, game.solver_output_path+"/Q.pkl")
-    # Q_file = open(solver_output_path+"/Q.pkl", "wb")
-    # pickle.dump(Q, Q_file)
-    # Q_file.close()
-
-    save_dict(Q2, game.solver_output_path+"/Q2.pkl")
-    # Q2_file = open(solver_output_path+"/Q2.pkl", "wb")
-    # pickle.dump(Q2, Q2_file)
-    # Q2_file.close()
-
-    checklist = [(1, 1, 0, 1),
-            (1, 2, 0, 2),
-            (1, 2, 0, 3),
-            (1, 2, 1, 3),
-            (1, 1, 3, 3)]
-
-    print("Computing policy")
-    policy = compute_Game_Policy(game,Q,checklist)
-    save_dict(policy, game.solver_output_path+"/policy.pkl")    
-    # policy_file = open(solver_output_path+"/policy.pkl", "wb")
-    # pickle.dump(policy, policy_file)
-    # policy_file.close()
-
-
-solver_output_path = get_solver_output_path(method, gsize, p1_startpos, p2_startpos, data_solverOutput_dir)
+  
+from input_data import *
+solver_output_path = get_solver_output_path(method, gsize, nt, p1_startpos, p2_startpos, data_solverOutput_dir)
 game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method, solver_output_path)
-solve_Game(game)
+solve_Game(game, nt)

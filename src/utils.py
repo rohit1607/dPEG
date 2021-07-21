@@ -54,8 +54,8 @@ def save_dict(dict, fpath_fname):
     pickle.dump(dict, dict_file)
     dict_file.close()
 
-def get_solver_output_path(method, gsize, p1_startpos, p2_startpos, data_solverOutput_dir):
-    tmp_prob_name=method + "_g" + str(gsize) + "_p" + str(p1_startpos) + "_" +str(p2_startpos)
+def get_solver_output_path(method, gsize, nt, p1_startpos, p2_startpos, data_solverOutput_dir):
+    tmp_prob_name=method + "_g" + str(gsize) +"_nt" + str(nt) + "_p" + str(p1_startpos) + "_" +str(p2_startpos)
     solver_output_path = os.path.join(data_solverOutput_dir, tmp_prob_name)
     print(solver_output_path)
     try:

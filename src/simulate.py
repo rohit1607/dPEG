@@ -69,19 +69,18 @@ def sample_action(d_a1):
     return int(distr.rvs(size=1)[0])
 
 
-def generate_trajectories(g, policy):
+def generate_trajectories(g, full_policy):
 
     traj = []
     s = g.get_state()
     traj.append(s)
 
     count = 0
-    while True:
-        count+=1
-        print("s=",s, len(policy[s]))
-        id = np.random.randint(0,len(policy[s]),1)[0]
+    for t in range(nt-1,-1,-1):
+        print("s=",s, len(full_policy[t][s]))
+        id = np.random.randint(0,len(full_policy[t][s]),1)[0]
         print("id=", id)
-        d_a = policy[s][id]
+        d_a = full_policy[t][s][id]
         a1 = sample_action(d_a[0])
         a2 = sample_action(d_a[1])
         print(d_a, a1, a2)
@@ -92,7 +91,7 @@ def generate_trajectories(g, policy):
         
     return traj
 
-def plot_trajectories(g, traj, policy, fname=None):
+def plot_trajectories(g, traj, fname=None):
 
 
 
@@ -170,15 +169,15 @@ game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader
 
 print("path=", solver_output_path)
 
-policy_file = open(solver_output_path+"/policy.pkl", "rb")
-policy = pickle.load(policy_file)
-policy_file.close()
-check_policy(policy)
+full_policy_file = open(solver_output_path+"/full_policy.pkl", "rb")
+full_policy = pickle.load(full_policy_file)
+full_policy_file.close()
+# check_policy(policy)
 
 fname=solver_output_path+"/traj"
 print("fname=",fname)
-traj = generate_trajectories(game, policy)
+traj = generate_trajectories(game, full_policy)
 print("traj= ", traj)
-plot_trajectories(game, traj, policy, fname)
+plot_trajectories(game, traj, fname)
 # plt.show()
 

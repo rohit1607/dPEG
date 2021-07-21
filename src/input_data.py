@@ -21,4 +21,5 @@ for obs in obs_list:
 evader_targets = [(2,3)]
 # methods= ['r_term_only','del_t','final_manh','del_manh']
 method = 'del_manh'
+nt = 5
 
