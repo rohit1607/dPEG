@@ -33,6 +33,9 @@ def Game_VI(game):
                 print("degen mat at s=",s)
                 print("len(utility_list=", len(utility_list))
 
+        for s in game.term_S:
+            msne_util[s]= 0
+            
         for s in game.non_term_S:
             for a1 in game.A[0]:
                 for a2 in game.A[1]:  

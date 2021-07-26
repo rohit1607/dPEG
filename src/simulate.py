@@ -22,18 +22,18 @@ def manual_moves(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets,
 def setup_grid_in_plot(fig, ax, g):
 
     msize = 100
-    ax.set_xlim(0,g.xs[-1] + (g.dxy/2))
-    ax.set_ylim(0,g.ys[-1] + (g.dxy/2))
+    ax.set_xlim(-0.5,g.xs[-1] + (g.dxy/2))
+    ax.set_ylim(-0.5,g.ys[-1] + (g.dxy/2))
 
-    minor_ticks = [i-g.dxy for i in range(0, gsize + 1, gsize)]
-    major_ticks = [i-g.dxy for i in range(0, gsize + 1, gsize)]
+    minor_ticks = [i + g.dxy/2 for i in range(0, gsize , 1)]
+    major_ticks = [i for i in range(0, gsize , 1)]
 
     ax.set_xticks(minor_ticks, minor=True)
     ax.set_xticks(major_ticks, minor=False)
     ax.set_yticks(major_ticks, minor=False)
     ax.set_yticks(minor_ticks, minor=True)
 
-    ax.grid(b= True, which='major', color='#CCCCCC', axis='both',linestyle = '-', alpha = 0.5, zorder = -1e5)
+    ax.grid(b= True, which='minor', color='#CCCCCC', axis='both',linestyle = '-', alpha = 0.5, zorder = -1e5)
     ax.tick_params(axis='both', which='both', labelsize=20)
 
     # ax.set_xlabel('X (Non-Dim)', fontsize = 20)
@@ -117,9 +117,9 @@ def plot_trajectories(g, traj, policy, fname=None):
         # annotations = [i for i in range(t) ]
         try:
             print("t=", t)
-            plt.plot(p1_xtr[0:t+1], p1_ytr[0:t+1], color='r',label='pursuer')
+            plt.plot(p1_xtr[0:t+1], p1_ytr[0:t+1], color='r',label='Pursuer')
             plt.scatter(p1_xtr[0:t+1], p1_ytr[0:t+1], color='r')
-            plt.plot(p2_xtr[0:t+1], p2_ytr[0:t+1], color='g', label='evader')
+            plt.plot(p2_xtr[0:t+1], p2_ytr[0:t+1], color='g', label='Evader')
             plt.scatter(p2_xtr[0:t+1], p2_ytr[0:t+1], marker='^', color='g')
 
             plt.annotate(str(t), (p1_xtr[t], p1_ytr[t]),color='r')
