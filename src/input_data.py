@@ -12,7 +12,7 @@ MAX_SIM_ITERS = 30
 TOL = 0.01
 
 gsize = 4
-nt = 5
+nt = 6
 
 p1_startpos = (0,0)
 p2_startpos = (3,0)
@@ -29,7 +29,7 @@ evader_targets = [(3,3)]
 # methods= ['r_term_only','del_t','final_manh','del_manh']
 method = 'del_t'
 
-env_name = 'g4_nt5_half_flow'
+env_name = 'g4_noVel_1rzn'
 full_env_path = os.path.join(data_Input_dir,env_name)
 env = {}
 env['velx'], env['vely'], env['nrzns'], env['nt'] = load_vel_field(full_env_path)

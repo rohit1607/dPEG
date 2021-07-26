@@ -22,18 +22,18 @@ def manual_moves(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets,
 def setup_grid_in_plot(fig, ax, g):
 
     msize = 100
-    ax.set_xlim(0,g.xs[-1] + (g.dxy/2))
-    ax.set_ylim(0,g.ys[-1] + (g.dxy/2))
+    ax.set_xlim(-0.5,g.xs[-1] + (g.dxy/2))
+    ax.set_ylim(-0.5,g.ys[-1] + (g.dxy/2))
 
-    minor_ticks = [i-g.dxy for i in range(0, gsize + 1, gsize)]
-    major_ticks = [i-g.dxy for i in range(0, gsize + 1, gsize)]
+    minor_ticks = [i + g.dxy/2 for i in range(0, gsize , 1)]
+    major_ticks = [i for i in range(0, gsize , 1)]
 
     ax.set_xticks(minor_ticks, minor=True)
     ax.set_xticks(major_ticks, minor=False)
     ax.set_yticks(major_ticks, minor=False)
     ax.set_yticks(minor_ticks, minor=True)
 
-    ax.grid(b= True, which='major', color='#CCCCCC', axis='both',linestyle = '-', alpha = 0.5, zorder = -1e5)
+    ax.grid(b= True, which='minor', color='#CCCCCC', axis='both',linestyle = '-', alpha = 0.5, zorder = -1e5)
     ax.tick_params(axis='both', which='both', labelsize=20)
 
     # ax.set_xlabel('X (Non-Dim)', fontsize = 20)
@@ -69,29 +69,36 @@ def sample_action(d_a1):
     return int(distr.rvs(size=1)[0])
 
 
-def generate_trajectories(g, full_policy):
+def generate_trajectories(g, policy):
 
     traj = []
     s = g.get_state()
     traj.append(s)
-
-    count = 0
-    for t in range(nt):
-        print("s=",s, len(full_policy[t][s]))
-        id = np.random.randint(0,len(full_policy[t][s]),1)[0]
+    velx = env['velx']
+    vely = env['vely']
+    nrzns = env['nrzns']
+    t = 0
+    # TODO: Add a rzn loop
+    rzn = 0
+    while True:
+        
+        print("s=",s, len(policy[t][s]))
+        id = np.random.randint(0,len(policy[t][s]),1)[0]
         print("id=", id)
-        d_a = full_policy[t][s][id]
+        d_a = policy[t][s][id]
         a1 = sample_action(d_a[0])
         a2 = sample_action(d_a[1])
         print(d_a, a1, a2)
-        r, s = g.move(a1, a2)
+        vx_rt = velx[rzn,t,:,:]
+        vy_rt = vely[rzn,t,:,:]
+        r, s = g.move(a1, a2, t, vx_rt, vy_rt)
         traj.append(s)
-        if s in g.term_S or count>=MAX_SIM_ITERS:
+        if s in g.term_S or t>=MAX_SIM_ITERS:
             break
-        
+        t+=1
     return traj
 
-def plot_trajectories(g, traj, fname=None):
+def plot_trajectories(g, traj, policy, fname=None):
 
 
 
@@ -116,9 +123,9 @@ def plot_trajectories(g, traj, fname=None):
         # annotations = [i for i in range(t) ]
         try:
             print("t=", t)
-            plt.plot(p1_xtr[0:t+1], p1_ytr[0:t+1], color='r',label='pursuer')
+            plt.plot(p1_xtr[0:t+1], p1_ytr[0:t+1], color='r',label='Pursuer')
             plt.scatter(p1_xtr[0:t+1], p1_ytr[0:t+1], color='r')
-            plt.plot(p2_xtr[0:t+1], p2_ytr[0:t+1], color='g', label='evader')
+            plt.plot(p2_xtr[0:t+1], p2_ytr[0:t+1], color='g', label='Evader')
             plt.scatter(p2_xtr[0:t+1], p2_ytr[0:t+1], marker='^', color='g')
 
             plt.annotate(str(t), (p1_xtr[t], p1_ytr[t]),color='r')
@@ -138,9 +145,10 @@ def plot_trajectories(g, traj, fname=None):
 
 def check_policy(policy):
     print("states with 0 length policies")
-    for s in policy.keys():
-        if len(policy[s]) == 0:
-            print(s, manhattan((s[0],s[1]),(s[2],s[3])))
+    for t in policy.keys():
+        for s in policy[t].keys():
+            if len(policy[t][s]) == 0:
+                print(s, manhattan((s[0],s[1]),(s[2],s[3])))
 
 from input_data import *
 
@@ -162,22 +170,22 @@ from input_data import *
 # p1_startpos = (1,0)
 # p2_startpos = (0,2) 
 solver_output_path = read_path_file()
-game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method, solver_output_path)
+game = deterministic_game(gsize, nt, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method, solver_output_path)
 
 # manual_moves(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets)
 
 
 print("path=", solver_output_path)
 
-full_policy_file = open(solver_output_path+"/full_policy.pkl", "rb")
-full_policy = pickle.load(full_policy_file)
-full_policy_file.close()
+policy_file = open(solver_output_path+"/full_policy.pkl", "rb")
+policy = pickle.load(policy_file)
+policy_file.close()
 # check_policy(policy)
 
 fname=solver_output_path+"/traj"
 print("fname=",fname)
-traj = generate_trajectories(game, full_policy)
+traj = generate_trajectories(game, policy)
 print("traj= ", traj)
-plot_trajectories(game, traj, fname)
+plot_trajectories(game, traj, policy, fname)
 # plt.show()
 

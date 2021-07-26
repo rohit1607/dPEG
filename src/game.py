@@ -32,7 +32,7 @@ class deterministic_game:
         self.actions()
         self.xs = [i for i in range(gsize)]
         self.ys = [j for j in range(gsize)]
-        self.dxy = 0.5*abs(self.xs[1]-self.xs[0])
+        self.dxy = abs(self.xs[1]-self.xs[0])
         self.r_term = 4*gsize
         self.method = method
         self.opt_measure = None

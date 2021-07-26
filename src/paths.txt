@@ -1,1 +1,1 @@
-/home/rohit/Documents/Research/dPEG/data_solverOutput/del_t_g4_nt5_p(0, 0)_(3, 0)_11
+/home/rohit/Documents/Research/dPEG/data_solverOutput/del_t_g4_nt6_p(0, 0)_(3, 0)
