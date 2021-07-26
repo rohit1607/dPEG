@@ -6,7 +6,7 @@ from utils import manhattan, save_dict
 
 
 class deterministic_game:
-    def __init__(self, gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method, solver_output_path):
+    def __init__(self, gsize, nt, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method, solver_output_path):
         """
         gsize: int
         p1_startpos: (int, int)
@@ -18,6 +18,7 @@ class deterministic_game:
 
         self.gsize = gsize
         self.ncells = gsize*gsize
+        self.nt = nt
         self.i = {}
         self.j = {}
         self.p1_startpos = p1_startpos
@@ -69,95 +70,97 @@ class deterministic_game:
         self.A = [self.A1, self.A2]
 
 
-    def dynamics(self, pos, a, REVERSE=False):
+    def dynamics(self, pos, a, vx, vy):
         """
         pos: (int, int)
         a: action
         """
         i,j = pos
 
-        if not REVERSE:
-            if a == 0:
-                pass
-            # right
-            if a == 1:
-                j += 1
-            # down
-            if a == 2:
-                i += 1
-            # left
-            if a == 3:
-                j -= 1
-            # up
-            if a == 4:
-                i -= 1
+        if a == 0:
+            pass
+        # right
+        if a == 1:
+            j += 1
+        # down
+        if a == 2:
+            i += 1
+        # left
+        if a == 3:
+            j -= 1
+        # up
+        if a == 4:
+            i -= 1
 
-        if REVERSE:
-            if a == 0:
-                pass
-            if a == 1:
-                j -= 1
-            if a == 2:
-                i -= 1
-            if a == 3:
-                j += 1
-            if a == 4:
-                i += 1     
+        i -= int(vy)
+        j += int(vx)
+
+        # if REVERSE:
+        #     if a == 0:
+        #         pass
+        #     if a == 1:
+        #         j -= 1
+        #     if a == 2:
+        #         i -= 1
+        #     if a == 3:
+        #         j += 1
+        #     if a == 4:
+        #         i += 1     
             
         return i,j
 
     def solve_MDPs_for_optimal_measures(self):
         self.opt_measure={}
-        for i2 in range(self.gsize):
-            for j2 in range(self.gsize):
-                if self.obs_mask[i2,j2]==0:
-                    V = self.solve_MDP((i2,j2))
-                    fname=self.solver_output_path+ "/V"+str((i2,j2))
-                    save_dict(V,fname)
-                for i1 in range(self.gsize):
-                    for j1 in range(self.gsize):
-                        if self.obs_mask[i1,j1]==0:
-                            self.opt_measure[(i1,j1),(i2,j2)] = V[(i1,j1)]
+        for t in range(self.nt):
+            self.opt_measure[t] = {}
+            for i2 in range(self.gsize):
+                for j2 in range(self.gsize):
+                    if self.obs_mask[i2,j2]==0:
+                        V = self.solve_MDP((i2,j2))
+                        fname=self.solver_output_path+ "/V"+str((i2,j2))
+                        save_dict(V,fname)
+                    for i1 in range(self.gsize):
+                        for j1 in range(self.gsize):
+                            if self.obs_mask[i1,j1]==0:
+                                self.opt_measure[t][(i1,j1),(i2,j2)] = V[t][(i1,j1)]
         return
 
     def solve_MDP(self, s2):
         V = {}
-        for i1 in range(self.gsize):
-            for j1 in range(self.gsize):
-                if self.obs_mask[i1,j1]==0:
-                    V[(i1,j1)]=0
-
-        count = 0
-        while True:
-            count+=1
-            del_Vs_max = 0
+        for t in range(self.nt):
+            V[t] = {}
             for i1 in range(self.gsize):
                 for j1 in range(self.gsize):
                     if self.obs_mask[i1,j1]==0:
-                        Vs = -np.inf
+                        V[t][(i1,j1)]=0
+
+        count = 0
+        for t in range(self.nt - 2, -1, -1):
+            for i1 in range(self.gsize):
+                for j1 in range(self.gsize): 
+                    if self.obs_mask[i1,j1]==0:
+                        Vs = 0
+                        # vx_rzns = velx[:, self.nt-t-1, i1, j1]
                         for a1 in self.A[0]: 
                             # try:
                             s = (i1,j1)
-                            old_Vs = V[s]
-                            r, new_s = self.mdp_move(s, a1, s_term=s2)
-                            tempV = r + V[new_s]
+
+                            r, new_s = self.mdp_move(s, a1, 0, 0, s_term=s2)
+                            
+                            tempV = r + V[t][new_s]
                             if tempV > Vs:
                                 Vs = tempV
                             # except:
                             #     print("MDP exceptoin: s,a1, new_s, s2= ", s,a1, new_s, s2)
+                        # V[s] stores max across actions
+                        V[t+1][s] = Vs
 
-                        V[s] = Vs
-                        del_V = abs(V[s] - old_Vs)
-                        del_V_max = max(del_Vs_max, del_V)
-
-            if del_V_max < 0.01:
-                print("count, del_Vs_max= ", count, del_Vs_max)
-                break
         return V
 
-    def mdp_move(self, s, a1, s_term):
+
+    def mdp_move(self, s, a1, vx, vy, s_term):
         r = -1
-        i_pr, j_pr = self.dynamics(s,a1)
+        i_pr, j_pr = self.dynamics(s,a1, vx, vy)
         # print("s, a1,s_term, i_pr, j_pr, = ", s,a1,s_term, i_pr, j_pr)
         new_s = (i_pr, j_pr)
         if not((0 <= i_pr < self.gsize) and (0 <= j_pr < self.gsize)):
@@ -170,9 +173,10 @@ class deterministic_game:
             r = 0
         return r, new_s
 
-    def general_one_step_rewards(self, s_old):
-        r = 0
 
+    def general_one_step_rewards(self, s_old, t):
+        r = 0
+        # print("check t=", t)
         if self.method == 'r_term_only':
             pass
 
@@ -186,19 +190,17 @@ class deterministic_game:
                 r = -(manhattan((self.i[1],self.j[1]),(self.i[2],self.j[2])) 
                     - manhattan((s_old[0], s_old[1]),(s_old[2], s_old[3]))  )
             else:
-                r = (self.opt_measure[(self.i[1],self.j[1]),(self.i[2],self.j[2])] 
-                    - self.opt_measure[(s_old[0], s_old[1]),(s_old[2], s_old[3])]  )
+                # TODO: handle edge case: t+1=nt
+                r = (self.opt_measure[t+1][(self.i[1],self.j[1]),(self.i[2],self.j[2])] - self.opt_measure[t][(s_old[0], s_old[1]),(s_old[2], s_old[3])]  )
 
-        
         if self.method == 'final_manh':
             r = -manhattan((self.i[1],self.j[1]),(self.i[2],self.j[2]))
         
-
         return r
 
     # def mdp_move()
 
-    def move(self, a1, a2):
+    def move(self, a1, a2, t, vx_rt, vy_rt):
         """
         p: 1 or 2 (player number)
         a: action
@@ -221,14 +223,17 @@ class deterministic_game:
         # Both player perform actions
         for p in [1,2]:
             # if player is in interior, move as per action, else don't move (or do action 0)
+            i, j = self.i[p], self.j[p]
+            vx = vx_rt[i,j]
+            vy = vy_rt[i,j]
             if not (self.in_obstacle(p) or self.is_outbound(p)):
-                self.i[p], self.j[p] = self.dynamics(self.get_pos(p), a[p])
+                self.i[p], self.j[p] = self.dynamics(self.get_pos(p), a[p], vx, vy)
             else:
-                self.i[p], self.j[p] = self.dynamics(self.get_pos(p), 0)
+                self.i[p], self.j[p] = self.dynamics(self.get_pos(p), 0, vx, vy)
 
             # if player goes outbound after making the move, reverse the move
             if self.is_outbound(p) or self.obs_mask[self.i[p],self.j[p]]==1:
-                self.i[p], self.j[p] = self.dynamics((self.i[p], self.j[p]), a[p], REVERSE=True)
+                self.i[p], self.j[p] = i, j
                 # print("outbound")
                 if p==1:
                     r = -self.r_term
@@ -244,7 +249,7 @@ class deterministic_game:
             # print("E_reaches_target")
 
         # add general one step reward based on method 
-        r += self.general_one_step_rewards(s_old)
+        r += self.general_one_step_rewards(s_old, t)
 
         self.set_state((self.i[1], self.j[1], self.i[2], self.j[2]))
 

@@ -48,5 +48,5 @@ def compare_Q1_Q2(Q1,Q2):
 # for i in range(len(utilities)):
 #     print(equilibria[i], utilities[i])
 
-for i in range(5,0,-1):
+for i in range(5,-1,-1):
     print(i)

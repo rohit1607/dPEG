@@ -76,7 +76,7 @@ def generate_trajectories(g, full_policy):
     traj.append(s)
 
     count = 0
-    for t in range(nt-1,-1,-1):
+    for t in range(nt):
         print("s=",s, len(full_policy[t][s]))
         id = np.random.randint(0,len(full_policy[t][s]),1)[0]
         print("id=", id)

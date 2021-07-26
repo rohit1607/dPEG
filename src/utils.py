@@ -3,6 +3,7 @@ import pickle
 import os
 from pathlib import Path
 import nashpy as nash
+import numpy as np
 
 
 def max_a1_min_a2(mat):
@@ -71,3 +72,12 @@ def get_solver_output_path(method, gsize, nt, p1_startpos, p2_startpos, data_sol
         solver_output_path = new_solver_output_path
         
     return solver_output_path
+
+def load_vel_field(env_name):
+    vx_fname = os.path.join(env_name,'vx.npy')
+    vy_fname = os.path.join(env_name,'vy.npy')
+    velx = np.load(vx_fname)
+    vely = np.load(vy_fname)
+    nrzns, nt, gsz, _ = velx.shape
+    print('data load complete')
+    return velx, vely, nrzns, nt
