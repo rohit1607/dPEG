@@ -7,9 +7,9 @@ from os.path import join
 from utils import manhattan, read_path_file
 
 
-def manual_moves(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method):
+def manual_moves(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method, solver_output_path):
 
-    game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method)
+    game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method, solver_output_path)
     print(game.get_state(), game.s)
     print(game.move(2,1))
     print("-------")
@@ -21,7 +21,7 @@ def manual_moves(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets,
 
 def setup_grid_in_plot(fig, ax, g):
 
-    msize = 100
+    msize = 200
     ax.set_xlim(-0.5,g.xs[-1] + (g.dxy/2))
     ax.set_ylim(-0.5,g.ys[-1] + (g.dxy/2))
 
@@ -92,7 +92,7 @@ def generate_trajectories(g, policy):
         
     return traj
 
-def plot_trajectories(g, traj, policy, fname=None):
+def plot_trajectories(g, traj, policy=None, fname=None):
 
 
 
@@ -122,9 +122,9 @@ def plot_trajectories(g, traj, policy, fname=None):
             plt.plot(p2_xtr[0:t+1], p2_ytr[0:t+1], color='g', label='Evader')
             plt.scatter(p2_xtr[0:t+1], p2_ytr[0:t+1], marker='^', color='g')
 
-            plt.annotate(str(t), (p1_xtr[t], p1_ytr[t]),color='r')
-            plt.annotate(str(t), (p2_xtr[t], p2_ytr[t]), color='g')
-            plt.legend()
+            plt.annotate(str(t), (p1_xtr[t], p1_ytr[t]),color='r', fontsize=20)
+            plt.annotate(str(t), (p2_xtr[t], p2_ytr[t]), color='g',fontsize=20)
+            plt.legend(loc=2, prop={'size': 16})
         except:
             assert(0>1)
 
@@ -162,6 +162,7 @@ from input_data import *
 
 # p1_startpos = (1,0)
 # p2_startpos = (0,2) 
+
 solver_output_path = read_path_file()
 game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader_targets, method, solver_output_path)
 
@@ -169,7 +170,7 @@ game = deterministic_game(gsize, p1_startpos, p2_startpos, obstacle_mask, evader
 
 
 print("path=", solver_output_path)
-
+# Load policy
 policy_file = open(solver_output_path+"/policy.pkl", "rb")
 policy = pickle.load(policy_file)
 policy_file.close()
@@ -179,6 +180,8 @@ fname=solver_output_path+"/traj"
 print("fname=",fname)
 traj = generate_trajectories(game, policy)
 print("traj= ", traj)
-plot_trajectories(game, traj, policy, fname)
+# traj = [(4,2,0,3), (3,2,0,4), (2,2, 0, 5), (2,3, 1, 5), (2,4,2,5), (3,4,3,5), (4,4,4,5), (4,5,5,5)]
+print("len traj=",len(traj))
+plot_trajectories(game, traj,None,fname)
 # plt.show()
 

@@ -76,7 +76,7 @@ def Game_VI(game):
 
     return Q, Q2
 
-def compute_Game_Policy(game,Q,checklist):
+def compute_Game_Policy(game,Q,checklist=None):
     policy={}
     eQ = {}     
     for s in game.non_term_S:
@@ -84,10 +84,11 @@ def compute_Game_Policy(game,Q,checklist):
         rps=nash.Game(Q[s], eQ[s])
         eqs = rps.support_enumeration()
         policy[s]= list(eqs)
-        if s in checklist:
-            print("policy=" ,s, policy[s], len(policy[s]))
-            print("Q[s]=", Q[s])
-            print()
+        if checklist != None:
+            if s in checklist:
+                print("Q[s]=\n", Q[s])
+                print("policy=" ,s, policy[s], len(policy[s]))
+                print()
         # if s == (1,0,1,3):
         #     break
     return policy
@@ -104,27 +105,16 @@ def solve_Game(game):
     paths_file.close()
 
     save_dict(Q, game.solver_output_path+"/Q.pkl")
-    # Q_file = open(solver_output_path+"/Q.pkl", "wb")
-    # pickle.dump(Q, Q_file)
-    # Q_file.close()
 
     save_dict(Q2, game.solver_output_path+"/Q2.pkl")
-    # Q2_file = open(solver_output_path+"/Q2.pkl", "wb")
-    # pickle.dump(Q2, Q2_file)
-    # Q2_file.close()
 
-    checklist = [(1, 1, 0, 1),
-            (1, 2, 0, 2),
-            (1, 2, 0, 3),
-            (1, 2, 1, 3),
-            (1, 1, 3, 3)]
+    checklist = [(1,2,0,3),
+                (2,1,3,0),
+                (2,2,3,3) ]
 
     print("Computing policy")
     policy = compute_Game_Policy(game,Q,checklist)
     save_dict(policy, game.solver_output_path+"/policy.pkl")    
-    # policy_file = open(solver_output_path+"/policy.pkl", "wb")
-    # pickle.dump(policy, policy_file)
-    # policy_file.close()
 
 
 solver_output_path = get_solver_output_path(method, gsize, p1_startpos, p2_startpos, data_solverOutput_dir)

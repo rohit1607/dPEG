@@ -1,1 +1,1 @@
-/home/rohit/Documents/Research/dPEG/data_solverOutput/del_manh_g6_p(4, 2)_(0, 5)_1
+/home/rohit/Documents/Research/dPEG/data_solverOutput/del_manh_g4_p(0, 0)_(0, 3)_1
